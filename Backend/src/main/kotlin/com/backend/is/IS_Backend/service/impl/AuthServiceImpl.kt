@@ -1,7 +1,7 @@
 package com.backend.`is`.IS_Backend.service.impl
 
 import com.backend.`is`.IS_Backend.dto.auth.AuthRequestDTO
-import com.backend.`is`.IS_Backend.dto.auth.AuthResponseDTO
+import com.backend.`is`.IS_Backend.dto.auth.CountResponseDTO
 import com.backend.`is`.IS_Backend.dto.auth.LoginDTO
 import com.backend.`is`.IS_Backend.model.domain.User
 import com.backend.`is`.IS_Backend.repository.UserRepository
@@ -22,25 +22,31 @@ class AuthServiceImpl(
 ) : AuthServiceKt {
 
     @Transactional
-    override fun register(request: AuthRequestDTO): AuthResponseDTO {
+    override fun register(request: AuthRequestDTO): Unit {
         // Ensure email is unique
         if (userRepository.findByEmail(request.email).isPresent) {
             throw IllegalArgumentException("Email is already in use")
         }
         val user = User(request.email, passwordEncoder.encode(request.password))
-        val saved = userRepository.save(user)
-        val token = jwtService.generateToken(saved)
-        return AuthResponseDTO(email = saved.username, token = token)
+        userRepository.save(user)
     }
 
-    override fun login(request: LoginDTO): AuthResponseDTO {
+    override fun login(request: LoginDTO) : String {
         authenticationManager.authenticate(
             UsernamePasswordAuthenticationToken(request.email, request.password)
         )
         val user = userRepository.findByEmail(request.email).orElseThrow {
             IllegalArgumentException("Invalid credentials")
         }
-        val token = jwtService.generateToken(user)
-        return AuthResponseDTO(email = user.username, token = token)
+        return jwtService.generateToken(user)
+    }
+    override fun makeCount(user: User) : CountResponseDTO {
+        user.setCount(user.getCount() + 1)
+        userRepository.save(user)
+        return CountResponseDTO(user.getCount());
+    }
+
+    override fun getCount(user: User) : CountResponseDTO {
+        return CountResponseDTO(user.getCount())
     }
 }

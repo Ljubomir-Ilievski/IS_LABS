@@ -1,10 +1,31 @@
 <script setup lang="ts">
 import useAuthentication from "../repository/useAuthentication";
+import type {RegisterInput} from "../api/types.ts";
+import {useRouter} from "vue-router";
+let email = "";
+let password = "";
+const router = useRouter()
 
- function makeRegister() {
+async function makeRegister() {
 
- /* useAuthentication.makeRegister();*/
-console.log("USING THIS METHOD")
+try {
+  const registerInput: RegisterInput = {
+    email: email,
+    password: password
+  };
+
+ await useAuthentication.makeRegister(registerInput);
+ router.push('/login')
+
+}
+catch (error) {
+  console.log(error);
+}
+finally {
+  console.log("Register");
+}
+
+
 }
 
 
@@ -16,13 +37,13 @@ console.log("USING THIS METHOD")
       <h2>Register</h2>
 
       <div class="form-group">
-        <label for="username">Username</label>
-        <input id="username" type="text" placeholder="Enter your username" />
+        <label for="username">Email</label>
+        <input v-model="email" id="username" type="text" placeholder="Enter your username" />
       </div>
 
       <div class="form-group">
         <label for="password">Password</label>
-        <input id="password" type="password" placeholder="Enter your password" />
+        <input v-model="password" id="password" type="password" placeholder="Enter your password" />
       </div>
 
       <button @click="makeRegister" class="submit-btn">Sign Up</button>

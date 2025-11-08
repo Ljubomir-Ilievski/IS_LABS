@@ -14,3 +14,7 @@ data class AuthResponseDTO(
     val email: String,
     val token: String
 )
+
+data class CountResponseDTO(
+   val count: Int
+)

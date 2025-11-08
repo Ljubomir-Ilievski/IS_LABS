@@ -1,12 +1,20 @@
 import http from "../api/api.ts";
-import type { APIResponse } from "../api/types.ts";
+import type {RegisterInput, AuthResponse, CountResponse} from "../api/types.ts";
 
 
-async function makeLogin() {
-    return await http.post<APIResponse<string>>("school");
+async function makeLogin(body: RegisterInput) {
+    return await http.post<AuthResponse>("/api/auth/login", body);
 }
-async function makeRegister() {
-    return await http.post<APIResponse<string>>("school");
+async function makeRegister(body: RegisterInput) {
+    return await http.post<AuthResponse>('/api/auth/register', body);
 }
 
-export default { makeLogin, makeRegister };
+async function makeCount() {
+    return await http.post<CountResponse>('/api/auth/makeCount');
+}
+async function getCount() {
+    return await http.get<CountResponse>('/api/auth/getCount');
+}
+
+
+export default { makeLogin, makeRegister, makeCount, getCount };
