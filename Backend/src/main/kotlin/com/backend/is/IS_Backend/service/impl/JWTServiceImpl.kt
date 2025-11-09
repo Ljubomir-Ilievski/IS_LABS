@@ -44,9 +44,9 @@ class JWTServiceImpl : JWTService {
             .signWith(getSignInKey(), SignatureAlgorithm.HS256)
             .compact()
 
-    override fun isTokenValid(token: String, userDetails: UserDetails): Boolean {
-        val username = extractUsername(token)
-        return (username == userDetails.username) && !isTokenExpired(token)
+    override fun isTokenValid(token: String): Boolean {
+        extractAllClaims(token);
+        return !isTokenExpired(token)
     }
 
     override fun isTokenExpired(token: String): Boolean = extractExpiration(token).before(Date())

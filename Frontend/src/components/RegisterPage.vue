@@ -2,24 +2,41 @@
 import useAuthentication from "../repository/useAuthentication";
 import type {RegisterInput} from "../api/types.ts";
 import {useRouter} from "vue-router";
+import {ref} from "vue";
+import EmailPassowrdFormatCheck from "../utilityFunctions/EmailPassowrdFormatCheck";
 let email = "";
 let password = "";
+let emailConflictMessage = ref<string>("");
+let emailFormatErrorMessage = ref<string>("");
+let passwordFormatErrorMessage = ref<string>("");
 const router = useRouter()
 
-async function makeRegister() {
 
-try {
+async function makeRegister() {
   const registerInput: RegisterInput = {
     email: email,
     password: password
   };
 
+  if (!EmailPassowrdFormatCheck.validEmail(registerInput.email)){
+    emailFormatErrorMessage.value = "Invalid email format"
+    return;
+  }
+  if (!EmailPassowrdFormatCheck.validPassword(registerInput.password)){
+    console.log("IS IT GETTING TO PASSORD CHECK")
+    passwordFormatErrorMessage.value = "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character"
+    return;
+  }
+
+
+try {
  await useAuthentication.makeRegister(registerInput);
  router.push('/login')
 
 }
 catch (error) {
-  console.log(error);
+  console.log(error.response.data.message)
+  emailConflictMessage.value = error.response.data.message;
 }
 finally {
   console.log("Register");
@@ -39,11 +56,16 @@ finally {
       <div class="form-group">
         <label for="username">Email</label>
         <input v-model="email" id="username" type="text" placeholder="Enter your username" />
+        <span style="margin-top: 5px; color: red">{{emailConflictMessage}}</span>
+        <span style="margin-top: 5px; color: red">{{emailFormatErrorMessage}}</span>
+
       </div>
 
       <div class="form-group">
         <label for="password">Password</label>
         <input v-model="password" id="password" type="password" placeholder="Enter your password" />
+        <span style="margin-top: 5px; color: red">{{passwordFormatErrorMessage}}</span>
+
       </div>
 
       <button @click="makeRegister" class="submit-btn">Sign Up</button>

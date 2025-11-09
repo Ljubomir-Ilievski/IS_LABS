@@ -34,7 +34,7 @@ class JWTAuthenticationFilter(
                 val userDetails = userDetailsService.loadUserByUsername(username)
 
                 // Validate token
-                if (jwtService.isTokenValid(token, userDetails)) {
+                if (jwtService.isTokenValid(token)) {
                     // Create authentication token
                     val authToken = UsernamePasswordAuthenticationToken(
                         userDetails,

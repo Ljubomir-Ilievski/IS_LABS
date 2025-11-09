@@ -13,7 +13,7 @@ interface JWTService {
     fun getSignInKey(): Key
     fun <T> extractClaim(token: String, claimsResolver: Function<Claims, T>): T
     fun generateToken(user: User): String
-    fun isTokenValid(token: String, userDetails: UserDetails): Boolean
+    fun isTokenValid(token: String): Boolean
     fun isTokenExpired(token: String): Boolean
     fun extractExpiration(token: String): Date
 }

@@ -2,9 +2,11 @@
 import type {RegisterInput} from "../api/types.ts";
 import useAuthentication from "../repository/useAuthentication.ts";
 import {useRouter} from "vue-router";
+import {ref} from "vue";
 const router = useRouter()
 let email = "";
 let password = "";
+let emailOrPasswordNotCorrectMessage = ref<string>("")
 
 async function makeLogin() {
 
@@ -18,9 +20,9 @@ async function makeLogin() {
     router.push('/')
 
 
-    console.log("WHAT AM I GETTING HERE", response.data);
+
   } catch (error) {
-    console.log(error);
+    emailOrPasswordNotCorrectMessage.value = error.response.data.message;
   } finally {
     console.log("Register");
   }
@@ -41,6 +43,8 @@ async function makeLogin() {
       <div class="form-group">
         <label for="password">Password</label>
         <input v-model="password" id="password" type="password" placeholder="Enter your password" />
+        <span style="margin-top: 5px; color: red">{{emailOrPasswordNotCorrectMessage}}</span>
+
       </div>
 
       <button @click="makeLogin" class="submit-btn">Sign Up</button>

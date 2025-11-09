@@ -3,6 +3,9 @@ package com.backend.`is`.IS_Backend.service.impl
 import com.backend.`is`.IS_Backend.dto.auth.AuthRequestDTO
 import com.backend.`is`.IS_Backend.dto.auth.CountResponseDTO
 import com.backend.`is`.IS_Backend.dto.auth.LoginDTO
+import com.backend.`is`.IS_Backend.exception.EmailAlreadyInUseException
+import com.backend.`is`.IS_Backend.exception.InvalidEmailFormatException
+import com.backend.`is`.IS_Backend.exception.WeakPasswordException
 import com.backend.`is`.IS_Backend.model.domain.User
 import com.backend.`is`.IS_Backend.repository.UserRepository
 import com.backend.`is`.IS_Backend.service.intf.AuthServiceKt
@@ -21,11 +24,22 @@ class AuthServiceImpl(
     private val jwtService: JWTService
 ) : AuthServiceKt {
 
+    private val EMAIL_REGEX = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+    private val STRONG_PASSWORD_REGEX = Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d]).{8,}$")
+
     @Transactional
     override fun register(request: AuthRequestDTO): Unit {
+        // Validate email format
+        if (!EMAIL_REGEX.matches(request.email)) {
+            throw InvalidEmailFormatException("Email must be a valid email address")
+        }
+        // Validate password strength
+        if (!STRONG_PASSWORD_REGEX.matches(request.password)) {
+            throw WeakPasswordException("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character")
+        }
         // Ensure email is unique
         if (userRepository.findByEmail(request.email).isPresent) {
-            throw IllegalArgumentException("Email is already in use")
+            throw EmailAlreadyInUseException()
         }
         val user = User(request.email, passwordEncoder.encode(request.password))
         userRepository.save(user)
