@@ -1,11 +1,14 @@
 package com.backend.`is`.IS_Backend.controller
 
+
+
 import com.backend.`is`.IS_Backend.dto.auth.AuthRequestDTO
 import com.backend.`is`.IS_Backend.dto.auth.AuthResponseDTO
 import com.backend.`is`.IS_Backend.dto.auth.CountResponseDTO
 import com.backend.`is`.IS_Backend.dto.auth.LoginDTO
 import com.backend.`is`.IS_Backend.model.domain.User
 import com.backend.`is`.IS_Backend.service.intf.AuthServiceKt
+import com.backend.`is`.IS_Backend.service.intf.TwoFactorAuthService
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
@@ -20,7 +23,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/auth")
 class AuthController(
-    private val authenticationService: AuthServiceKt
+    private val authenticationService: AuthServiceKt,
+    private val twoFactorAuthService: TwoFactorAuthService
 ) {
 
     @PostMapping("/register")

@@ -7,6 +7,10 @@ const router = useRouter()
 let email = "";
 let password = "";
 let emailOrPasswordNotCorrectMessage = ref<string>("")
+const isTwoFA = ref<boolean>(false)
+const twoFACode = ref<string>("")
+const infoMessage = ref<string>("")
+const twoFAErrorMessage = ref<string>("")
 
 async function makeLogin() {
 
@@ -17,16 +21,52 @@ async function makeLogin() {
     };
 
     const response = await useAuthentication.makeLogin(registerInput);
-    router.push('/')
+    // On successful basic auth, start 2FA flow instead of navigating immediately
+    isTwoFA.value = true;
+    infoMessage.value = `A verification code has been sent to ${email}. Please enter it below.`
+    emailOrPasswordNotCorrectMessage.value = "";
+    // Trigger sending the code
+    try {
+      await useAuthentication.sendTwoFactorCode(email);
+    } catch (e) {
+      // If sending fails, allow user to retry
+      twoFAErrorMessage.value = "Failed to send the code. Please click 'Resend code'.";
+    }
 
 
 
   } catch (error) {
-    emailOrPasswordNotCorrectMessage.value = error.response.data.message;
+    // @ts-ignore - error may be AxiosError
+    emailOrPasswordNotCorrectMessage.value = error?.response?.data?.message || 'Login failed';
   } finally {
     console.log("Register");
   }
 
+}
+
+async function resendCode() {
+  twoFAErrorMessage.value = "";
+  infoMessage.value = `A new verification code has been sent to ${email}.`;
+  try {
+    await useAuthentication.sendTwoFactorCode(email);
+  } catch (e) {
+    twoFAErrorMessage.value = "Could not resend the code. Please try again later.";
+  }
+}
+
+async function verifyCode() {
+  twoFAErrorMessage.value = "";
+  try {
+    const numericCode = Number(twoFACode.value);
+    if (!twoFACode.value || Number.isNaN(numericCode)) {
+      twoFAErrorMessage.value = "Please enter the 6-digit code.";
+      return;
+    }
+    await useAuthentication.verifyTwoFactorCode(email, numericCode);
+    router.push('/');
+  } catch (e) {
+    twoFAErrorMessage.value = "Invalid or expired code.";
+  }
 }
 </script>
 
@@ -37,17 +77,32 @@ async function makeLogin() {
 
       <div class="form-group">
         <label for="username">Email</label>
-        <input v-model="email" id="username" type="text" placeholder="Enter your username" />
+        <input v-model="email" id="username" type="text" placeholder="Enter your email" :disabled="isTwoFA" />
       </div>
 
       <div class="form-group">
         <label for="password">Password</label>
-        <input v-model="password" id="password" type="password" placeholder="Enter your password" />
+        <input v-model="password" id="password" type="password" placeholder="Enter your password" :disabled="isTwoFA" />
         <span style="margin-top: 5px; color: red">{{emailOrPasswordNotCorrectMessage}}</span>
 
       </div>
 
-      <button @click="makeLogin" class="submit-btn">Sign Up</button>
+      <template v-if="!isTwoFA">
+        <button @click="makeLogin" class="submit-btn">Login</button>
+      </template>
+
+      <template v-else>
+        <div class="form-group">
+          <label for="twofa">Two-Factor Code</label>
+          <input v-model="twoFACode" id="twofa" type="text" placeholder="Enter the code sent to your email" />
+          <small class="info">{{infoMessage}}</small>
+          <span style="margin-top: 5px; color: red">{{twoFAErrorMessage}}</span>
+        </div>
+        <div class="twofa-actions">
+          <button @click="resendCode" type="button" class="secondary-btn">Resend code</button>
+          <button @click="verifyCode" class="submit-btn">Verify</button>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -116,5 +171,31 @@ input:focus {
 
 .submit-btn:hover {
   background-color: #2563eb;
+}
+
+.secondary-btn {
+  background-color: #e5e7eb;
+  color: #111827;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 15px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s;
+  margin-right: 8px;
+}
+
+.secondary-btn:hover {
+  background-color: #d1d5db;
+}
+
+.twofa-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.info {
+  color: #6b7280;
 }
 </style>

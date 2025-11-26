@@ -16,5 +16,15 @@ async function getCount() {
     return await http.get<CountResponse>('/api/auth/getCount');
 }
 
+// 2FA endpoints
+async function sendTwoFactorCode(email: string) {
+    // Backend expects @RequestParam email
+    return await http.post<string>('/api/2fa/send', null, { params: { email } });
+}
 
-export default { makeLogin, makeRegister, makeCount, getCount };
+async function verifyTwoFactorCode(email: string, code: number) {
+    // Backend expects @RequestParam email and code (Int)
+    return await http.post<string>('/api/2fa/verify', null, { params: { email, code } });
+}
+
+export default { makeLogin, makeRegister, makeCount, getCount, sendTwoFactorCode, verifyTwoFactorCode };
