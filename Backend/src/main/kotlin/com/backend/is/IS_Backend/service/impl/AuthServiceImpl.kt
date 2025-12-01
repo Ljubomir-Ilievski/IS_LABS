@@ -10,6 +10,7 @@ import com.backend.`is`.IS_Backend.model.domain.User
 import com.backend.`is`.IS_Backend.repository.UserRepository
 import com.backend.`is`.IS_Backend.service.intf.AuthServiceKt
 import com.backend.`is`.IS_Backend.service.intf.JWTService
+import com.backend.`is`.IS_Backend.service.intf.TwoFactorAuthService
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -21,10 +22,11 @@ class AuthServiceImpl(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
     private val authenticationManager: AuthenticationManager,
-    private val jwtService: JWTService
+    private val jwtService: JWTService,
+    private val twoFactorAuthService: TwoFactorAuthService
 ) : AuthServiceKt {
 
-    private val EMAIL_REGEX = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+    val EMAIL_REGEX = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
     private val STRONG_PASSWORD_REGEX = Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d]).{8,}$")
 
     @Transactional
@@ -52,6 +54,8 @@ class AuthServiceImpl(
         val user = userRepository.findByEmail(request.email).orElseThrow {
             IllegalArgumentException("Invalid credentials")
         }
+
+        twoFactorAuthService.sendCode(request.email)
         return jwtService.generateToken(user)
     }
     override fun makeCount(user: User) : CountResponseDTO {

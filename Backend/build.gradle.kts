@@ -28,6 +28,9 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("com.h2database:h2")
 
+    //.env
+    implementation("me.paulschwarz:spring-dotenv:4.0.0")
+
     //email
     implementation("org.springframework.boot:spring-boot-starter-mail")
 

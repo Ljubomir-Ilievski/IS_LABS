@@ -1,5 +1,7 @@
 package com.backend.`is`.IS_Backend.service.impl
 
+import com.backend.`is`.IS_Backend.repository.UserRepository
+import com.backend.`is`.IS_Backend.service.intf.JWTService
 import com.backend.`is`.IS_Backend.service.intf.TwoFactorAuthService
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
@@ -9,7 +11,11 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
 @Service
-class TwoFactorAuthServiceImpl(private val mailSender: JavaMailSender) : TwoFactorAuthService {
+class TwoFactorAuthServiceImpl(
+    private val mailSender: JavaMailSender,
+    private val jWTService: JWTService,
+    private val userRepository: UserRepository
+) : TwoFactorAuthService {
 
     private val codeStorage = ConcurrentHashMap<String, CodeEntry>()
 
@@ -27,13 +33,14 @@ class TwoFactorAuthServiceImpl(private val mailSender: JavaMailSender) : TwoFact
         mailSender.send(message)
     }
 
-    override fun verifyCode(email: String, code: Int): Boolean {
+    override fun verifyCode(email: String, code: Int): String {
         val entry = codeStorage[email]
+        val user = userRepository.findByEmail(email).orElseThrow { IllegalArgumentException("Invalid email") };
         return if (entry != null && entry.code == code && LocalDateTime.now().isBefore(entry.expiration)) {
             codeStorage.remove(email)
-            true
+            jWTService.generateToken(user)
         } else {
-            false
+            throw IllegalArgumentException("Invalid code");
         }
     }
 

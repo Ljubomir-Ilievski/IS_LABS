@@ -20,16 +20,13 @@ async function makeLogin() {
       password: password
     };
 
-    const response = await useAuthentication.makeLogin(registerInput);
-    // On successful basic auth, start 2FA flow instead of navigating immediately
+    await useAuthentication.makeLogin(registerInput);
     isTwoFA.value = true;
-    infoMessage.value = `A verification code has been sent to ${email}. Please enter it below.`
+    infoMessage.value = `A verification code has been sent to ${email}. Please enter it above.`
     emailOrPasswordNotCorrectMessage.value = "";
-    // Trigger sending the code
     try {
       await useAuthentication.sendTwoFactorCode(email);
     } catch (e) {
-      // If sending fails, allow user to retry
       twoFAErrorMessage.value = "Failed to send the code. Please click 'Resend code'.";
     }
 
@@ -39,7 +36,7 @@ async function makeLogin() {
     // @ts-ignore - error may be AxiosError
     emailOrPasswordNotCorrectMessage.value = error?.response?.data?.message || 'Login failed';
   } finally {
-    console.log("Register");
+    console.log("Login");
   }
 
 }

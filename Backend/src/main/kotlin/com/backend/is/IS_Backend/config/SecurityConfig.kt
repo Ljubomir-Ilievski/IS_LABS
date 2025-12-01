@@ -51,7 +51,7 @@ class SecurityConfig (private val jwtAuthenticationFilter: JWTAuthenticationFilt
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
+                    .requestMatchers("/api/auth/**", "/h2-console/**", "/api/2fa/**").permitAll()
                     .anyRequest().authenticated()
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)

@@ -34,16 +34,8 @@ class AuthController(
     }
 
     @PostMapping("/login")
-    fun login(@RequestBody request: LoginDTO, response: HttpServletResponse): ResponseEntity<AuthResponseDTO> {
-        val token = authenticationService.login(request)
-
-        val cookie = Cookie("jwt", token).apply {
-            isHttpOnly = true
-            secure = false
-            path = "/"
-            maxAge = 24 * 60 * 60
-        }
-        response.addCookie(cookie)
+    fun login(@RequestBody request: LoginDTO): ResponseEntity<AuthResponseDTO> {
+       authenticationService.login(request)
         return ResponseEntity( HttpStatus.OK)
     }
 
