@@ -27,10 +27,22 @@ class AuthController(
     private val twoFactorAuthService: TwoFactorAuthService
 ) {
 
-    @PostMapping("/register")
-    fun register(@RequestBody request: AuthRequestDTO): ResponseEntity<AuthResponseDTO> {
-        authenticationService.register(request)
-        return ResponseEntity(HttpStatus.CREATED)
+    @PostMapping("/register/admin")
+    fun registerAdmin(@RequestBody request: AuthRequestDTO): ResponseEntity<Void> {
+        authenticationService.registerAdmin(request)
+        return ResponseEntity(HttpStatus.ACCEPTED)
+    }
+
+    @PostMapping("/register/librarian")
+    fun registerLibrarian(@RequestBody request: AuthRequestDTO): ResponseEntity<Void> {
+        authenticationService.registerLibrarian(request)
+        return ResponseEntity(HttpStatus.ACCEPTED)
+    }
+
+    @PostMapping("/register/reader")
+    fun registerReader(@RequestBody request: AuthRequestDTO): ResponseEntity<Void> {
+        authenticationService.registerReader(request)
+        return ResponseEntity(HttpStatus.ACCEPTED)
     }
 
     @PostMapping("/login")

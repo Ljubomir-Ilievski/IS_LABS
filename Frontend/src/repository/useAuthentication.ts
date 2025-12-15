@@ -1,12 +1,29 @@
 import http from "../api/api.ts";
-import type {RegisterInput, AuthResponse, CountResponse} from "../api/types.ts";
+import type {RegisterInput, LoginInput, AuthResponse, CountResponse, Role} from "../api/types.ts";
 
 
-async function makeLogin(body: RegisterInput) {
+async function makeLogin(body: LoginInput) {
     return await http.post<AuthResponse>("/api/auth/login", body);
 }
 async function makeRegister(body: RegisterInput) {
-    return await http.post<AuthResponse>('/api/auth/register', body);
+    // Backend now exposes role-specific registration endpoints
+    // /api/auth/register/admin | /librarian | /reader
+    const path = getRegisterPathByRole(body.role);
+    // Backend expects AuthRequestDTO with email & password in body
+    const payload = { email: body.email, password: body.password };
+    return await http.post<AuthResponse>(path, payload);
+}
+
+function getRegisterPathByRole(role: Role): string {
+    switch (role) {
+        case 'ADMIN':
+            return '/api/auth/register/admin';
+        case 'LIBRARIAN':
+            return '/api/auth/register/librarian';
+        case 'READER':
+        default:
+            return '/api/auth/register/reader';
+    }
 }
 
 async function makeCount() {
@@ -27,4 +44,18 @@ async function verifyTwoFactorCode(email: string, code: number) {
     return await http.post<string>('/api/2fa/verify', null, { params: { email, code } });
 }
 
-export default { makeLogin, makeRegister, makeCount, getCount, sendTwoFactorCode, verifyTwoFactorCode };
+async function verifyRegister(email: string, code: number) {
+    return await http.post<string>('/api/2fa/verify/register', null, { params: { email, code } });
+}
+
+async function pingReader() {
+    return await http.get<string>('/api/ping/reader');
+}
+async function pingLibrarian() {
+    return await http.get<string>('/api/ping/librarian');
+}
+async function pingAdmin() {
+    return await http.get<string>('/api/ping/admin');
+}
+
+export default { makeLogin, makeRegister, makeCount, getCount, sendTwoFactorCode, verifyTwoFactorCode, verifyRegister, pingReader, pingLibrarian, pingAdmin };

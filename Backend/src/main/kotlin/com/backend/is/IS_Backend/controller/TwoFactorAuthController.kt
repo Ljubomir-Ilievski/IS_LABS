@@ -39,4 +39,10 @@ class TwoFactorAuthController(
 
         return "Login Successful"
     }
+
+    @PostMapping("/verify/register")
+    fun verifyRegister(@RequestParam email: String, @RequestParam code: Int): String {
+        authenticationService.verifyRegister(email, code)
+        return "Registration Successful"
+    }
 }

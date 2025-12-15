@@ -2,7 +2,7 @@ package com.backend.`is`.IS_Backend.dto.auth
 
 data class AuthRequestDTO(
     val email: String,
-    val password: String
+    val password: String,
 )
 
 data class LoginDTO(

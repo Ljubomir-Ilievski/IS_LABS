@@ -52,6 +52,9 @@ class SecurityConfig (private val jwtAuthenticationFilter: JWTAuthenticationFilt
                 auth
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers("/api/auth/**", "/h2-console/**", "/api/2fa/**").permitAll()
+                    .requestMatchers("/api/ping/admin").hasRole("ADMIN")
+                    .requestMatchers("/api/ping/librarian").hasAnyRole("LIBRARIAN", "ADMIN")
+                    .requestMatchers("/api/ping/reader").hasAnyRole("READER", "LIBRARIAN", "ADMIN")
                     .anyRequest().authenticated()
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)

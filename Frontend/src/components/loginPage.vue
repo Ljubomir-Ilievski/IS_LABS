@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type {RegisterInput} from "../api/types.ts";
+import type {LoginInput} from "../api/types.ts";
 import useAuthentication from "../repository/useAuthentication.ts";
 import {useRouter} from "vue-router";
 import {ref} from "vue";
@@ -15,12 +15,12 @@ const twoFAErrorMessage = ref<string>("")
 async function makeLogin() {
 
   try {
-    const registerInput: RegisterInput = {
+    const loginInput: LoginInput = {
       email: email,
       password: password
     };
 
-    await useAuthentication.makeLogin(registerInput);
+    await useAuthentication.makeLogin(loginInput);
     isTwoFA.value = true;
     infoMessage.value = `A verification code has been sent to ${email}. Please enter it above.`
     emailOrPasswordNotCorrectMessage.value = "";

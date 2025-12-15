@@ -44,5 +44,15 @@ class TwoFactorAuthServiceImpl(
         }
     }
 
+    override fun verifyCodeOnly(email: String, code: Int): Boolean {
+        val entry = codeStorage[email]
+        return if (entry != null && entry.code == code && LocalDateTime.now().isBefore(entry.expiration)) {
+            codeStorage.remove(email)
+            true
+        } else {
+            false
+        }
+    }
+
     private data class CodeEntry(val code: Int, val expiration: LocalDateTime)
 }

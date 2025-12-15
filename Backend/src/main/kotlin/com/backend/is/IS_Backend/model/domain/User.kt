@@ -1,15 +1,10 @@
 package com.backend.`is`.IS_Backend.model.domain
 
+import com.backend.`is`.IS_Backend.enumerations.Roles
 import com.fasterxml.jackson.annotation.JsonIgnore
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.Inheritance
-import jakarta.persistence.InheritanceType
-import jakarta.persistence.Table
+import jakarta.persistence.*
 import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
 @Entity
@@ -27,12 +22,19 @@ open class User(
     @Column(name = "password", nullable = false)
     private var passwordValue: String = "",
 
-    private var count: Int = 0
+
+    @Enumerated(EnumType.STRING)
+    private var userRole: Roles
 ) : UserDetails {
 
-    constructor(email: String, password: String) : this(null, email, password)
+    private var count: Int = 0
 
-    override fun getAuthorities(): Collection<out GrantedAuthority> = emptyList()
+    constructor(email: String, password: String) : this(null, email, password, Roles.ROLE_READER)
+
+    constructor(email: String, password: String, role: Roles) : this(null, email, password, role)
+
+    override fun getAuthorities(): Collection<out GrantedAuthority> =
+        listOf(SimpleGrantedAuthority(userRole.name))
 
     override fun getPassword(): String = passwordValue
 

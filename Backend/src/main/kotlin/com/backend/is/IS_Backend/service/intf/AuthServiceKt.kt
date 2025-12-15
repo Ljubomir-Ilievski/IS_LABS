@@ -8,7 +8,10 @@ import com.backend.`is`.IS_Backend.model.domain.User
 import jakarta.servlet.http.HttpServletResponse
 
 interface AuthServiceKt {
-    fun register(request: AuthRequestDTO): Unit
+    fun registerAdmin(request: AuthRequestDTO)
+    fun registerLibrarian(request: AuthRequestDTO)
+    fun registerReader(request: AuthRequestDTO)
+    fun verifyRegister(email: String, code: Int)
     fun login(request: LoginDTO) : String
     fun makeCount(user: User) : CountResponseDTO
     fun getCount(user: User) : CountResponseDTO
