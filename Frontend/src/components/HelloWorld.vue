@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import authRepo from '../repository/useAuthentication.ts'
+import authRepo, { listBooks, pingBook } from '../repository/useAuthentication.ts'
+import type { BookDto, BookAccessResultDto } from '../api/types.ts'
 
 defineProps<{ msg: string }>()
 
@@ -15,6 +16,13 @@ const loadingAdmin = ref(false)
 const resultReader = ref<string>('')
 const resultLibrarian = ref<string>('')
 const resultAdmin = ref<string>('')
+
+// Books state
+const books = ref<BookDto[]>([])
+const booksLoading = ref<boolean>(false)
+const booksError = ref<string>('')
+const bookLoading: Record<number, boolean> = {}
+const bookResult: Record<number, string> = {}
 
 async function initCount() {
   try {
@@ -38,6 +46,7 @@ async function initCount() {
 
 onMounted(() => {
   initCount()
+  fetchBooks()
 })
 
 async function onCountClick() {
@@ -103,6 +112,53 @@ async function pingRole(role: 'reader' | 'librarian' | 'admin') {
     setLoading(false)
   }
 }
+
+async function fetchBooks() {
+  booksLoading.value = true
+  booksError.value = ''
+  try {
+    const res = await listBooks()
+    const data = (res as any)?.data
+    // backend may wrap or return plain array
+    const arr = Array.isArray(data?.content) ? data.content : (Array.isArray(data) ? data : [])
+    books.value = arr as BookDto[]
+  } catch (e: any) {
+    const status = e?.response?.status
+    if (status === 401) booksError.value = 'Unauthorized — please login to see books'
+    else booksError.value = e?.response?.data?.message || 'Failed to load books'
+  } finally {
+    booksLoading.value = false
+  }
+}
+
+function permissionText(result: BookAccessResultDto): string {
+  // Translate flags into human-friendly text
+  if (result.canReadAndWrite || (result.canRead && result.canWrite)) return 'Read & Write'
+  if (result.canWrite) return 'Write only'
+  if (result.canRead) return 'Read only'
+  return 'No permissions'
+}
+
+async function onBookClick(book: BookDto) {
+  bookResult[book.id] = ''
+  bookLoading[book.id] = true
+  try {
+    const res = await pingBook(book.id)
+    const payload = (res as any)?.data?.content ?? (res as any)?.data
+    if (payload && typeof payload === 'object') {
+      bookResult[book.id] = permissionText(payload as BookAccessResultDto)
+    } else {
+      bookResult[book.id] = 'Unknown response'
+    }
+  } catch (e: any) {
+    const status = e?.response?.status
+    if (status === 401) bookResult[book.id] = 'Unauthorized'
+    else if (status === 403) bookResult[book.id] = 'Forbidden'
+    else bookResult[book.id] = e?.response?.data?.message || 'Error'
+  } finally {
+    bookLoading[book.id] = false
+  }
+}
 </script>
 
 <template>
@@ -142,6 +198,25 @@ async function pingRole(role: 'reader' | 'librarian' | 'admin') {
     <div class="result" v-if="resultReader">Reader: {{ resultReader }}</div>
     <div class="result" v-if="resultLibrarian">Librarian: {{ resultLibrarian }}</div>
     <div class="result" v-if="resultAdmin">Admin: {{ resultAdmin }}</div>
+  </div>
+
+  <!-- Books section -->
+  <div class="books-section">
+    <h2>Books</h2>
+    <div v-if="booksLoading" class="page-spinner"></div>
+    <div v-if="booksError" class="error">{{ booksError }}</div>
+    <div class="books-list" v-if="!booksLoading && books.length">
+      <div class="book-item" v-for="b in books" :key="b.id">
+        <button class="book-button" @click="onBookClick(b)" :disabled="bookLoading[b.id]">
+          <span class="book-title">{{ b.title }}</span>
+        </button>
+        <div class="book-result">
+          <span v-if="bookLoading[b.id]" class="row-spinner"></span>
+          <span v-else-if="bookResult[b.id]">{{ bookResult[b.id] }}</span>
+        </div>
+      </div>
+    </div>
+    <div v-else-if="!booksLoading && !books.length" class="empty">No books.</div>
   </div>
 </template>
 
@@ -198,4 +273,16 @@ async function pingRole(role: 'reader' | 'librarian' | 'admin') {
   color: #374151;
 }
 .result { margin-top: 4px; }
+
+.books-section { margin-top: 20px; }
+.books-list { display: flex; flex-direction: column; gap: 10px; }
+.book-item { display: flex; align-items: center; gap: 12px; }
+.book-button { width: 100%; text-align: left; padding: 10px 12px; border-radius: 8px; border: 1px solid #e5e7eb; background: #f9fafb; cursor: pointer; }
+.book-button:hover { background: #f3f4f6; }
+.book-title { font-weight: 600; color: #111827; }
+.book-result { min-width: 140px; color: #374151; }
+.error { color: #b91c1c; margin-top: 8px; }
+.empty { color: #6b7280; }
+.page-spinner { margin: 8px 0; width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: #374151; border-radius: 50%; animation: spin 0.9s linear infinite; }
+.row-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: #374151; border-radius: 50%; animation: spin 0.9s linear infinite; }
 </style>

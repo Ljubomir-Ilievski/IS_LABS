@@ -8,7 +8,6 @@ import io.jsonwebtoken.security.Keys
 import com.backend.`is`.IS_Backend.constants.JWTConstants
 import com.backend.`is`.IS_Backend.model.domain.User
 import com.backend.`is`.IS_Backend.service.intf.JWTService
-import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Service
 import java.security.Key
 import java.util.Date
@@ -44,12 +43,33 @@ class JWTServiceImpl : JWTService {
             .signWith(getSignInKey(), SignatureAlgorithm.HS256)
             .compact()
 
+    override fun generateJitToken(user: User, willBeIssuedAt: Date, expiresAt: Date, roleToBeElevated: String): String =
+        Jwts.builder()
+            .setSubject(user.username)
+            .claim("id", user.id)
+            .claim("jit_role", roleToBeElevated)
+            .setIssuedAt(willBeIssuedAt)
+            .setExpiration(expiresAt)
+            .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+            .compact()
+
+
     override fun isTokenValid(token: String): Boolean {
         extractAllClaims(token);
         return !isTokenExpired(token)
     }
 
     override fun isTokenExpired(token: String): Boolean = extractExpiration(token).before(Date())
-
     override fun extractExpiration(token: String): Date = extractClaim(token, Claims::getExpiration)
+    override fun extractIssuedAt(token: String) : Date = extractClaim(token, Claims::getIssuedAt)
+    override fun extractElevatedRole(token: String): String ?{
+        val claims = extractAllClaims(token)
+        return claims["jit_role"] as? String
+    }
+
+    override fun isJitTokenValid(token: String): Boolean {
+        val now = Date()
+        return now.before(extractExpiration(token)) &&
+                now.after(extractIssuedAt(token))
+    }
 }

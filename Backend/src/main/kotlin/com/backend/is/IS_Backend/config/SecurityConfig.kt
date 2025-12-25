@@ -15,10 +15,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig (private val jwtAuthenticationFilter: JWTAuthenticationFilter){
+@EnableMethodSecurity(prePostEnabled = true)
+class SecurityConfig (private val jwtAuthenticationFilter: JWTAuthenticationFilter, private val jitAuthorisationFilter: JITAuthorisationFilter){
 
 
     @Bean
@@ -52,12 +54,15 @@ class SecurityConfig (private val jwtAuthenticationFilter: JWTAuthenticationFilt
                 auth
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers("/api/auth/**", "/h2-console/**", "/api/2fa/**").permitAll()
+                    .requestMatchers("/api/authorization/**").hasRole("ADMIN")
+                    .requestMatchers("/api/users/**").hasRole("ADMIN")
                     .requestMatchers("/api/ping/admin").hasRole("ADMIN")
                     .requestMatchers("/api/ping/librarian").hasAnyRole("LIBRARIAN", "ADMIN")
                     .requestMatchers("/api/ping/reader").hasAnyRole("READER", "LIBRARIAN", "ADMIN")
                     .anyRequest().authenticated()
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .addFilterAfter(jitAuthorisationFilter, JWTAuthenticationFilter::class.java)
             .headers { it.frameOptions { opts -> opts.disable() } }
         return http.build()
     }

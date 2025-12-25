@@ -24,7 +24,9 @@ open class User(
 
 
     @Enumerated(EnumType.STRING)
-    private var userRole: Roles
+    private var userRole: Roles,
+    @OneToOne(mappedBy = "user", cascade = [CascadeType.ALL])
+    private var jitChange: JitChange? = null
 ) : UserDetails {
 
     private var count: Int = 0

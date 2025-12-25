@@ -1,5 +1,5 @@
 import http from "../api/api.ts";
-import type {RegisterInput, LoginInput, AuthResponse, CountResponse, Role} from "../api/types.ts";
+import type {RegisterInput, LoginInput, AuthResponse, CountResponse, Role, UserSummary, JitAuthorisationRequest, BookDto, BookAccessResultDto} from "../api/types.ts";
 
 
 async function makeLogin(body: LoginInput) {
@@ -59,3 +59,23 @@ async function pingAdmin() {
 }
 
 export default { makeLogin, makeRegister, makeCount, getCount, sendTwoFactorCode, verifyTwoFactorCode, verifyRegister, pingReader, pingLibrarian, pingAdmin };
+
+// New admin-facing repository functions
+export async function getNonAdminUsers() {
+    // Adjust this path to match backend list endpoint if different
+    return await http.get<UserSummary[]>('/api/users/non-admins');
+}
+
+export async function createJitForRoleChange(payload: JitAuthorisationRequest) {
+    // Backend endpoint per issue description
+    return await http.post('/api/authorization/jit-db', payload);
+}
+
+// Books repository
+export async function listBooks() {
+    return await http.get<BookDto[]>('/api/books');
+}
+
+export async function pingBook(id: number) {
+    return await http.post<BookAccessResultDto>(`/api/books/${id}/ping`);
+}

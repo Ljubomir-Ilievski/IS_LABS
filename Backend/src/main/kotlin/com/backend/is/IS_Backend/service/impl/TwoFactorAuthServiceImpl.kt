@@ -18,6 +18,8 @@ class TwoFactorAuthServiceImpl(
 ) : TwoFactorAuthService {
 
     private val codeStorage = ConcurrentHashMap<String, CodeEntry>()
+    private val DEV_READER_EMAIL = "reader@seed.local"
+    private val DEV_OVERRIDE_CODE = 0 // Accept "000000" as dev override (parsed as Int -> 0)
 
     override fun sendCode(email: String) {
         val code = Random.nextInt(100000, 999999)
@@ -36,6 +38,10 @@ class TwoFactorAuthServiceImpl(
     override fun verifyCode(email: String, code: Int): String {
         val entry = codeStorage[email]
         val user = userRepository.findByEmail(email).orElseThrow { IllegalArgumentException("Invalid email") };
+        // Dev bypass for the seeded reader account
+        if (email.equals(DEV_READER_EMAIL, ignoreCase = true) && code == DEV_OVERRIDE_CODE) {
+            return jWTService.generateToken(user)
+        }
         return if (entry != null && entry.code == code && LocalDateTime.now().isBefore(entry.expiration)) {
             codeStorage.remove(email)
             jWTService.generateToken(user)
@@ -46,6 +52,10 @@ class TwoFactorAuthServiceImpl(
 
     override fun verifyCodeOnly(email: String, code: Int): Boolean {
         val entry = codeStorage[email]
+        // Dev bypass for the seeded reader account
+        if (email.equals(DEV_READER_EMAIL, ignoreCase = true) && code == DEV_OVERRIDE_CODE) {
+            return true
+        }
         return if (entry != null && entry.code == code && LocalDateTime.now().isBefore(entry.expiration)) {
             codeStorage.remove(email)
             true

@@ -58,6 +58,54 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(body)
     }
 
+    @ExceptionHandler(InvalidTimeWindowException::class)
+    fun handleInvalidTimeWindow(
+        ex: InvalidTimeWindowException,
+        request: HttpServletRequest
+    ): ResponseEntity<ApiError> {
+        val status = HttpStatus.BAD_REQUEST
+        val body = ApiError(
+            timestamp = OffsetDateTime.now(),
+            status = status.value(),
+            error = status.reasonPhrase,
+            message = ex.message,
+            path = request.requestURI
+        )
+        return ResponseEntity.status(status).body(body)
+    }
+
+    @ExceptionHandler(UserNotFoundException::class)
+    fun handleUserNotFound(
+        ex: UserNotFoundException,
+        request: HttpServletRequest
+    ): ResponseEntity<ApiError> {
+        val status = HttpStatus.NOT_FOUND
+        val body = ApiError(
+            timestamp = OffsetDateTime.now(),
+            status = status.value(),
+            error = status.reasonPhrase,
+            message = ex.message,
+            path = request.requestURI
+        )
+        return ResponseEntity.status(status).body(body)
+    }
+
+    @ExceptionHandler(value = [ForbiddenOperationException::class, AdminElevationNotAllowedException::class])
+    fun handleForbidden(
+        ex: RuntimeException,
+        request: HttpServletRequest
+    ): ResponseEntity<ApiError> {
+        val status = HttpStatus.FORBIDDEN
+        val body = ApiError(
+            timestamp = OffsetDateTime.now(),
+            status = status.value(),
+            error = status.reasonPhrase,
+            message = ex.message,
+            path = request.requestURI
+        )
+        return ResponseEntity.status(status).body(body)
+    }
+
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgument(
         ex: IllegalArgumentException,

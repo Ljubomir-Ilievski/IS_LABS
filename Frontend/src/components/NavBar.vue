@@ -53,6 +53,9 @@ async function onLogoutClick() {
       LOGO HERE
     </span>
     <div id="ButtonsLoginRegister">
+      <button @click="router.push('/admin')" style="margin-right:8px">
+        Admin
+      </button>
       <template v-if="loggedIn">
         <button @click="onLogoutClick">Logout</button>
       </template>
